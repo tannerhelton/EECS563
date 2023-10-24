@@ -1,5 +1,6 @@
 import socket
 import os
+import sys
 import struct
 
 def send_file_to_server(server_ip, server_port, file_path):
@@ -23,4 +24,12 @@ def send_file_to_server(server_ip, server_port, file_path):
 
     print(f"File {file_name} sent successfully.")
 
-send_file_to_server("127.0.0.1", 12345, "test.txt")
+if __name__ == "__main__":
+    if len(sys.argv) != 4:
+        print("Usage: python3 TCP-client.py <remote-IP> <remote-port> <local-file-path>")
+        sys.exit(1)
+
+    server_ip = sys.argv[1]
+    server_port = int(sys.argv[2])
+    file_path = sys.argv[3]
+    send_file_to_server(server_ip, server_port, file_path)

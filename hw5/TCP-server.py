@@ -1,5 +1,6 @@
 import socket
 import os
+import sys
 import struct
 
 def start_tcp_server(port, save_directory):
@@ -27,4 +28,10 @@ def start_tcp_server(port, save_directory):
 
     print(f"File {file_name} saved successfully.")
 
-start_tcp_server(12345, "received_files")
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python3 TCP-server.py <local-port>")
+        sys.exit(1)
+
+    port = int(sys.argv[1])
+    start_tcp_server(port, "received_files")
