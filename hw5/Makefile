@@ -5,7 +5,7 @@ FILE = test.txt
 tcp-server: TCP-server.py
 	@python3 TCP-server.py $(PORT)
 
-tcp-client: TCP-client.py
+tcp-client: TCP-client.py check
 	@python3 TCP-client.py $(IP) $(PORT) $(FILE)
 	@make check
 
@@ -30,9 +30,5 @@ check:
 		echo "Received:   $$RECEIVED_MD5" ; \
 	fi ;
 	@echo "File consistency check complete."
-
-zip: clean
-	@zip -r hw5.zip . -x "*.git*" -x "*received_files*"
-
 
 .PHONY: clean zip check
