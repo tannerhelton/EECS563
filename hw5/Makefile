@@ -31,4 +31,8 @@ check:
 	fi ;
 	@echo "File consistency check complete."
 
-.PHONY: clean
+zip: clean
+	@zip -r hw5.zip . -x "*.git*" -x "*received_files*"
+
+
+.PHONY: clean zip check
