@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IM Platform</title>
+  </head>
+  <body>
+    <div>
+      <h2>Online Users</h2>
+      <ul id="online-users"></ul>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io("/", { query: { token: "your-access-token" } });
+
+      socket.on("online-users", (users) => {
+        const usersList = document.getElementById("online-users");
+        usersList.innerHTML = "";
+        users.forEach((user) => {
+          const userElement = document.createElement("li");
+          userElement.textContent = user;
+          usersList.appendChild(userElement);
+        });
+      });
+    </script>
+  </body>
+</html>
