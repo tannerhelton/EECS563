@@ -4,13 +4,14 @@ const socketIo = require("socket.io");
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+require("dotenv").config();
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
 // Connect to MongoDB
-mongoose.connect("your-mongodb-uri", {
+mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
@@ -28,7 +29,7 @@ const authenticateToken = (socket, next) => {
   const token = socket.handshake.query.token;
   if (token == null) return next(new Error("Authentication error"));
 
-  jwt.verify(token, "your-secret-key", (err, user) => {
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return next(new Error("Authentication error"));
     socket.user = user;
     next();
@@ -77,7 +78,7 @@ app.post("/login", async (req, res) => {
   if (await bcrypt.compare(req.body.password, user.password)) {
     const accessToken = jwt.sign(
       { username: user.username },
-      "your-secret-key"
+      process.env.JWT_SECRET
     );
     res.json({ accessToken });
   } else {
