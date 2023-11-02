@@ -39,6 +39,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
       let token = null;
+      let currentUsername = null; // Store the current username
 
       function login() {
         const username = document.getElementById("login-username").value;
@@ -51,6 +52,7 @@
           .then((response) => response.json())
           .then((data) => {
             token = data.accessToken;
+            currentUsername = username; // Store the username
             document.getElementById("auth-section").style.display = "none";
             document.getElementById("chat-section").style.display = "block";
             initializeChat();
@@ -67,7 +69,13 @@
           body: JSON.stringify({ username, password }),
         })
           .then((response) => response.text())
-          .then((data) => alert(data))
+          .then((data) => {
+            alert(data);
+            currentUsername = username; // Store the username
+            document.getElementById("auth-section").style.display = "none";
+            document.getElementById("chat-section").style.display = "block";
+            initializeChat();
+          })
           .catch((error) => console.error("Error:", error));
       }
 
@@ -76,7 +84,7 @@
 
         function sendMessage() {
           const message = document.getElementById("message-input").value;
-          socket.emit("send-message", { message });
+          socket.emit("send-message", { username: currentUsername, message }); // Include the username
           document.getElementById("message-input").value = "";
         }
 
@@ -122,6 +130,7 @@
           })
           .catch((error) => console.error("Error:", error));
       }
+
       document.getElementById("logout-button").onclick = logout;
     </script>
   </body>
