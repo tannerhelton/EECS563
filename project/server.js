@@ -31,6 +31,15 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model("User", userSchema);
 
+// Define Message Schema for MongoDB
+const messageSchema = new mongoose.Schema({
+  username: String,
+  message: String,
+  timestamp: { type: Date, default: Date.now },
+});
+
+const Message = mongoose.model("Message", messageSchema);
+
 // Middleware to check authentication
 const authenticateToken = (socket, next) => {
   const token = socket.handshake.query.token;
@@ -60,8 +69,13 @@ io.on("connection", (socket) => {
     updateOnlineUsers();
   });
 
-  socket.on("send-message", (data) => {
+  socket.on("send-message", async (data) => {
     io.emit("receive-message", data);
+    const message = new Message({
+      username: data.username,
+      message: data.message,
+    });
+    await message.save();
   });
 
   function updateOnlineUsers() {
@@ -116,6 +130,16 @@ app.post("/login", async (req, res) => {
 app.post("/logout", (req, res) => {
   res.clearCookie("token");
   res.send("Logged out");
+});
+
+app.get("/chat-history", async (req, res) => {
+  try {
+    const messages = await Message.find().sort({ timestamp: 1 }).exec();
+    res.json(messages);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("An error occurred");
+  }
 });
 
 server.listen(3000, () => {
