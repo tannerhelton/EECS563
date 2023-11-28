@@ -5,41 +5,85 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>IM Platform</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <!-- Login and Registration Forms -->
-    <div id="auth-section">
-      <div>
-        <input type="text" id="login-username" placeholder="Username" />
-        <input type="password" id="login-password" placeholder="Password" />
-        <button onclick="login()">Login</button>
+    <div id="auth-section" class="container mt-5">
+      <div id="login-form">
+        <input
+          type="text"
+          class="form-control"
+          id="login-username"
+          placeholder="Username"
+        />
+        <input
+          type="password"
+          class="form-control mt-2"
+          id="login-password"
+          placeholder="Password"
+        />
+        <button class="btn btn-primary mt-2" onclick="login()">Login</button>
+        <button class="btn btn-link mt-2" onclick="showRegister()">
+          Register
+        </button>
       </div>
-      <div>
-        <input type="text" id="register-username" placeholder="Username" />
-        <input type="password" id="register-password" placeholder="Password" />
-        <button onclick="register()">Register</button>
+      <div id="register-form" style="display: none">
+        <input
+          type="text"
+          class="form-control"
+          id="register-username"
+          placeholder="Username"
+        />
+        <input
+          type="password"
+          class="form-control mt-2"
+          id="register-password"
+          placeholder="Password"
+        />
+        <button class="btn btn-secondary mt-2" onclick="register()">
+          Register
+        </button>
+        <button class="btn btn-link mt-2" onclick="showLogin()">Login</button>
       </div>
     </div>
 
     <!-- Chat Section -->
-    <div id="chat-section" style="display: none">
-      <div>
-        <h2>Online Users</h2>
-        <ul id="online-users"></ul>
+    <div id="chat-section" class="container mt-5" style="display: none">
+      <div class="row">
+        <div class="col-md-4">
+          <h2>Online Users</h2>
+          <ul id="online-users" class="list-group"></ul>
+        </div>
+        <div class="col-md-8">
+          <h2>Messages</h2>
+          <ul id="messages" class="list-group"></ul>
+          <input
+            type="text"
+            class="form-control mt-2"
+            id="message-input"
+            placeholder="Type a message"
+          />
+          <button class="btn btn-success mt-2" onclick="sendMessage()">
+            Send
+          </button>
+        </div>
       </div>
-      <div>
-        <h2>Messages</h2>
-        <ul id="messages"></ul>
-        <input type="text" id="message-input" placeholder="Type a message" />
-        <button onclick="sendMessage()">Send</button>
-      </div>
-      <button id="logout-button">Logout</button>
+      <button id="logout-button" class="btn btn-danger mt-3">Logout</button>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
+    <!-- Bootstrap JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
     <script>
       let token = null;
-      let currentUsername = null; // Store the current username
+      let currentUsername = null;
 
       function login() {
         const username = document.getElementById("login-username").value;
@@ -52,7 +96,7 @@
           .then((response) => response.json())
           .then((data) => {
             token = data.accessToken;
-            currentUsername = username; // Store the username
+            currentUsername = username;
             document.getElementById("auth-section").style.display = "none";
             document.getElementById("chat-section").style.display = "block";
             initializeChat();
@@ -71,7 +115,7 @@
           .then((response) => response.text())
           .then((data) => {
             alert(data);
-            currentUsername = username; // Store the username
+            currentUsername = username;
             document.getElementById("auth-section").style.display = "none";
             document.getElementById("chat-section").style.display = "block";
             initializeChat();
@@ -84,7 +128,7 @@
 
         function sendMessage() {
           const message = document.getElementById("message-input").value;
-          socket.emit("send-message", { username: currentUsername, message }); // Include the username
+          socket.emit("send-message", { username: currentUsername, message });
           document.getElementById("message-input").value = "";
         }
 
@@ -117,6 +161,46 @@
           document.getElementById("chat-section").style.display = "block";
           initializeChat();
         }
+
+        document
+          .getElementById("login-username")
+          .addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+              login();
+            }
+          });
+
+        document
+          .getElementById("login-password")
+          .addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+              login();
+            }
+          });
+
+        document
+          .getElementById("register-username")
+          .addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+              register();
+            }
+          });
+
+        document
+          .getElementById("register-password")
+          .addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+              register();
+            }
+          });
+
+        document
+          .getElementById("message-input")
+          .addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+              sendMessage();
+            }
+          });
       });
 
       function logout() {
@@ -132,6 +216,16 @@
       }
 
       document.getElementById("logout-button").onclick = logout;
+
+      function showRegister() {
+        document.getElementById("login-form").style.display = "none";
+        document.getElementById("register-form").style.display = "block";
+      }
+
+      function showLogin() {
+        document.getElementById("login-form").style.display = "block";
+        document.getElementById("register-form").style.display = "none";
+      }
     </script>
   </body>
 </html>
