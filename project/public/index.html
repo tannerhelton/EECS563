@@ -151,6 +151,8 @@
           })
           .then((data) => {
             if (data) {
+              token = data.accessToken;
+              document.cookie = `token=${token};path=/`;
               currentUsername = username;
               document.getElementById("auth-section").style.display = "none";
               document.getElementById("chat-section").style.display = "block";
