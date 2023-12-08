@@ -52,16 +52,43 @@
       </div>
     </div>
 
-    <!-- Chat Section -->
     <div id="chat-section" class="container mt-5" style="display: none">
       <div class="row">
         <div class="col-md-4">
           <h2>Online Users</h2>
+          <br />
+          <p>Click on a username to view that user's messages.</p>
           <ul id="online-users" class="list-group"></ul>
         </div>
         <div class="col-md-8">
           <h2>Messages</h2>
-          <ul id="messages" class="list-group"></ul>
+          <!-- Add a fixed-height and scrolling container for chat messages -->
+          <div
+            id="message-box"
+            class="scrolling-box"
+            style="height: 400px; overflow-y: scroll"
+          >
+            <ul id="messages" class="list-group"></ul>
+          </div>
+          <div id="filter-messages">
+            <button
+              id="revert-to-chat"
+              class="btn btn-primary mt-2"
+              style="display: none"
+              onclick="filterMessagesByUser(null)"
+            >
+              Revert to Chat
+            </button>
+            <!-- Add a button to revert to all chats -->
+            <button
+              id="revert-to-all"
+              class="btn btn-secondary mt-2"
+              style="display: none"
+              onclick="revertToChat()"
+            >
+              Revert to All Chats
+            </button>
+          </div>
           <input
             type="text"
             class="form-control mt-2"
@@ -112,16 +139,28 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, password }),
         })
-          .then((response) => response.text())
+          .then((response) => {
+            if (response.status === 400) {
+              // Username already exists, prompt user to try again
+              alert(
+                "Username already exists. Please try a different username."
+              );
+              return; // Stop further execution in this case
+            }
+            return response.json(); // Proceed if the status code is not 400
+          })
           .then((data) => {
-            alert(data);
-            currentUsername = username;
-            document.getElementById("auth-section").style.display = "none";
-            document.getElementById("chat-section").style.display = "block";
-            initializeChat();
+            if (data) {
+              currentUsername = username;
+              document.getElementById("auth-section").style.display = "none";
+              document.getElementById("chat-section").style.display = "block";
+              initializeChat();
+            }
           })
           .catch((error) => console.error("Error:", error));
       }
+
+      let currentFilteredUser = null;
 
       function initializeChat() {
         const socket = io({ query: { token } });
@@ -132,19 +171,54 @@
           document.getElementById("message-input").value = "";
         }
 
+        function updateChatView() {
+          const messagesList = document.getElementById("messages");
+          messagesList.innerHTML = "";
+
+          if (currentFilteredUser) {
+            document.getElementById("revert-to-chat").style.display = "block";
+          } else {
+            document.getElementById("revert-to-chat").style.display = "none";
+          }
+
+          // Display chat history
+          chatHistory.forEach((message) => {
+            if (currentFilteredUser) {
+              if (message.username === currentFilteredUser) {
+                const messageElement = document.createElement("li");
+                const usernameSpan = document.createElement("span");
+                usernameSpan.textContent = `${message.username}: `;
+                usernameSpan.style.fontWeight = "bold";
+                messageElement.appendChild(usernameSpan);
+                messageElement.appendChild(
+                  document.createTextNode(message.message)
+                );
+                messagesList.appendChild(messageElement);
+              }
+            } else {
+              const messageElement = document.createElement("li");
+              const usernameSpan = document.createElement("span");
+              usernameSpan.textContent = `${message.username}: `;
+              usernameSpan.style.fontWeight = "bold";
+              messageElement.appendChild(usernameSpan);
+              messageElement.appendChild(
+                document.createTextNode(message.message)
+              );
+              messagesList.appendChild(messageElement);
+            }
+          });
+
+          // Scroll to the bottom of the message box
+          const messageBox = document.getElementById("message-box");
+          messageBox.scrollTop = messageBox.scrollHeight;
+        }
+
         // Fetch chat history from the server
         fetch("/chat-history")
           .then((response) => response.json())
           .then((history) => {
-            const messagesList = document.getElementById("messages");
-            messagesList.innerHTML = "";
-
-            // Display chat history
-            history.forEach((message) => {
-              const messageElement = document.createElement("li");
-              messageElement.textContent = `${message.username}: ${message.message}`;
-              messagesList.appendChild(messageElement);
-            });
+            chatHistory = history;
+            updateChatView();
           })
           .catch((error) =>
             console.error("Error fetching chat history:", error)
@@ -157,17 +231,62 @@
             const userElement = document.createElement("li");
             userElement.textContent = user;
             usersList.appendChild(userElement);
+
+            userElement.addEventListener("click", () => {
+              filterMessagesByUser(user);
+            });
           });
         });
 
         socket.on("receive-message", (data) => {
-          const messagesList = document.getElementById("messages");
-          const messageElement = document.createElement("li");
-          messageElement.textContent = `${data.username}: ${data.message}`;
-          messagesList.appendChild(messageElement);
+          chatHistory.push(data);
+          updateChatView();
         });
 
         window.sendMessage = sendMessage;
+      }
+
+      function filterMessagesByUser(username) {
+        currentFilteredUser = username;
+        const messagesList = document.getElementById("messages").children;
+        for (const messageElement of messagesList) {
+          const usernameSpan = messageElement.querySelector("span");
+          if (currentFilteredUser && usernameSpan) {
+            const messageUsername = usernameSpan.textContent
+              .split(":")[0]
+              .trim();
+            if (messageUsername === currentFilteredUser) {
+              messageElement.style.display = "block";
+            } else {
+              messageElement.style.display = "none";
+            }
+          } else {
+            messageElement.style.display = "block";
+          }
+        }
+
+        if (currentFilteredUser) {
+          document.getElementById("revert-to-chat").style.display = "block";
+        } else {
+          document.getElementById("revert-to-chat").style.display = "none";
+        }
+      }
+
+      function revertToChat() {
+        currentFilteredUser = null;
+        updateChatView();
+      }
+
+      function filterMessagesByUser(username) {
+        const messagesList = document.getElementById("messages").children;
+        for (const messageElement of messagesList) {
+          const usernameSpan = messageElement.querySelector("span");
+          if (usernameSpan && usernameSpan.textContent.includes(username)) {
+            messageElement.style.display = "block";
+          } else {
+            messageElement.style.display = "none";
+          }
+        }
       }
 
       document.addEventListener("DOMContentLoaded", () => {

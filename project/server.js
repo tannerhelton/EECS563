@@ -25,7 +25,7 @@ mongoose
 
 // Define User Schema for MongoDB
 const userSchema = new mongoose.Schema({
-  username: String,
+  username: { type: String, unique: true },
   password: String,
 });
 
@@ -88,6 +88,10 @@ io.on("connection", (socket) => {
 
 app.post("/register", async (req, res) => {
   try {
+    const existingUser = await User.findOne({ username: req.body.username });
+    if (existingUser) {
+      return res.status(400).send("Username already exists");
+    }
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
     const user = new User({
       username: req.body.username,
